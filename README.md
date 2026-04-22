@@ -1,167 +1,144 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/QtRYN9D3)
-[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=23669076)
-
 # Práctica 1
-
 ## Implementación de un Mini Cloud Log Analyzer en ARM64
 
-**Modalidad:** Individual
-**Entorno de trabajo:** AWS Ubuntu ARM64 + GitHub Classroom
-**Lenguaje:** ARM64 Assembly (GNU Assembler) + Bash + GNU Make
+**Modalidad:** Individual  
+**Entorno de trabajo:** AWS Ubuntu ARM64 + GitHub Classroom  
+**Lenguaje:** ARM64 Assembly (GNU Assembler) + Bash + GNU Make  
+**Variante asignada:** D — Detectar tres errores consecutivos
+
+---
+
+## 📦 Entrega de la practica
+
+🔽 Descarga el proyecto completo:  
+👉 [MiniCloudAnalyzer.zip](https://github.com/user-attachments/files/26989903/MiniCloudAnalyzer.zip)
+
+
+### Contenido del archivo:
+
+- `analyzer.s` → Código fuente en ARM64 Assembly
+- `Makefile` → Script de compilación
+- `logs.txt` → Archivo de pruebas
+- `README.md` → Documentación del proyecto
 
 ---
 
 ## Introducción
 
-Los sistemas modernos de cómputo en la nube generan continuamente registros (*logs*) que permiten monitorear el estado de servicios, detectar fallas y activar alertas ante eventos críticos.
+Los sistemas modernos de cómputo en la nube generan continuamente registros (logs) que permiten monitorear el estado de servicios, detectar fallas y activar alertas ante eventos críticos.
 
-En esta práctica se desarrollará un módulo simplificado de análisis de logs, implementado en **ARM64 Assembly**, inspirado en tareas reales de monitoreo utilizadas en sistemas cloud, observabilidad y administración de infraestructura.
+En esta práctica se desarrolla un módulo simplificado de análisis de logs, implementado en ARM64 Assembly, inspirado en tareas reales de monitoreo utilizadas en sistemas cloud, observabilidad y administración de infraestructura.
 
-El programa procesará códigos de estado HTTP suministrados mediante entrada estándar (stdin):
+El programa procesa códigos de estado HTTP suministrados mediante entrada estándar:
 
-```bash id="y1gcmc"
+```bash
 cat logs.txt | ./analyzer
 ```
 
 ---
 
-## Objetivo general
+## 🎯 Objetivo general
 
-Diseñar e implementar, en lenguaje ensamblador ARM64, una solución para procesar registros de eventos y detectar condiciones definidas según la variante asignada.
-
----
-
-## Objetivos específicos
-
-El estudiante aplicará:
-
-* programación en ARM64 bajo Linux
-* manejo de registros
-* direccionamiento y acceso a memoria
-* instrucciones de comparación
-* estructuras iterativas en ensamblador
-* saltos condicionales
-* uso de syscalls Linux
-* compilación con GNU Make
-* control de versiones con GitHub Classroom
-
-Estos temas se alinean con contenidos clásicos de flujo de control, herramientas GNU, manejo de datos y convenciones de programación en ensamblador.   
+Diseñar e implementar, en lenguaje ensamblador ARM64, una solución para procesar registros de eventos y detectar la condición de **tres errores consecutivos** definida en la variante D.
 
 ---
 
-## Material proporcionado
+## ⚠️ Variante D — Detectar tres errores consecutivos
 
-Se entregará un repositorio preconfigurado que contiene:
+El programa debe leer los códigos HTTP línea por línea y determinar si en algún punto se reciben tres respuestas de error (4xx o 5xx) de forma consecutiva.
 
-* plantilla base en ARM64
-* archivo `Makefile`
-* script Bash de ejecución
-* archivo de datos (`logs.txt`)
-* pruebas iniciales
-* secciones marcadas con `TODO`
+**Regla:**
+- Error = códigos entre 400 y 599
+- Se detectan 3 errores seguidos
 
-El estudiante deberá completar la lógica correspondiente.
-
----
-
-## Variantes de la práctica
-
-### Variante A
-
-Contabilizar:
-
-* respuestas exitosas (2xx)
-* errores del cliente (4xx)
-* errores del servidor (5xx)
+**Lógica aplicada:**
+contador = 0
+por cada código leído:
+si 400 <= código <= 599:
+contador++
+si no:
+contador = 0
+si contador == 3:
+    mostrar mensaje y terminar
 
 ---
 
-### Variante B
+## 🧠 Objetivos específicos
 
-Determinar el código de estado más frecuente.
-
----
-
-### Variante C
-
-Detectar el primer evento crítico (503).
-
----
-
-### Variante D
-
-Detectar tres errores consecutivos.
+- Programación en ARM64 bajo Linux
+- Manejo de registros (`x19`, `x20`)
+- Direccionamiento y acceso a memoria
+- Instrucciones de comparación (`cmp`)
+- Estructuras iterativas en ensamblador
+- Saltos condicionales (`bne`, `beq`, `blt`, `bgt`)
+- Uso de syscalls Linux (`read`, `write`, `exit`)
+- Compilación con GNU Make
+- Control de versiones con GitHub Classroom
 
 ---
 
-### Variante E
-
-Calcular índice de salud:
-
-```text id="2u4vvx"
-Health Score = 100 - (errores × 10)
-```
+## 📁 Estructura del proyecto
+MiniCloudAnalyzer/
+├── analyzer.s
+├── Makefile
+├── logs.txt
+└── README.md
 
 ---
 
-## Compilación
+## ⚙️ Compilación
 
-```bash id="bmubtb"
+```bash
 make
 ```
 
+## ▶️ Ejecución
+
+```bash
+cat logs.txt | ./analyzer
+```
+
+## ✅ Resultado esperado
+Tres errores consecutivos detectados
+
 ---
 
-## Ejecución
+## 📸 Evidencia
 
-```bash id="gcqlf2"
-cat logs.txt | ./analyzer
+Se debe incluir una captura de pantalla donde se observe:
+
+```bash
+make
+make run
 ```
 
 ---
 
-## Entregables
+## 📌 Entregables
 
-Cada estudiante deberá entregar en su repositorio:
-
-* archivo fuente ARM64 funcional
-* solución implementada
-* README explicando diseño y lógica utilizada
-* evidencia de ejecución
-* commits realizados en GitHub Classroom
+- Código ARM64 funcional (`analyzer.s`)
+- Archivo comprimido `MiniCloudAnalyzer.zip`
+- README documentado
+- Evidencia de ejecución
+- Historial de commits en GitHub Classroom
 
 ---
 
-## Criterios de evaluación
+## 📊 Criterios de evaluación
 
-| Criterio                    | Ponderación |
-| --------------------------- | ----------- |
-| Compilación correcta        | 20%         |
-| Correctitud de la solución  | 35%         |
-| Uso adecuado de ARM64       | 25%         |
-| Documentación y comentarios | 10%         |
-| Evidencia de pruebas        | 10%         |
-
----
-
-## Restricciones
-
-No está permitido:
-
-* resolver la lógica en C
-* resolver la lógica en Python
-* modificar la variante asignada
-* omitir el uso de ARM64 Assembly
+| Criterio | Ponderación |
+|---|---|
+| Compilación correcta | 20% |
+| Correctitud de la solución | 35% |
+| Uso adecuado de ARM64 | 25% |
+| Documentación y comentarios | 10% |
+| Evidencia de pruebas | 10% |
 
 ---
 
-## Competencia a desarrollar
+## 🚫 Restricciones
 
-Comprender cómo un problema de procesamiento de datos es implementado a nivel máquina mediante instrucciones ARM64.
-
----
-
-## Nota
-
-Aunque este problema puede resolverse fácilmente en lenguajes de alto nivel, el propósito de la práctica es implementar **cómo lo resolvería la arquitectura**, no únicamente obtener el resultado.
-
+- No usar C para la lógica
+- No usar Python para la lógica
+- No modificar la variante asignada (D)
+- No omitir el uso de ARM64 Assembly
