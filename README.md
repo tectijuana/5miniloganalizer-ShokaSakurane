@@ -4,8 +4,8 @@
 **Materia:** Arquitectura de Computadoras  
 **Lenguaje:** ARM64 Assembly (GNU Assembler)  
 **Entorno:** AWS Ubuntu ARM64
-**Nombre del alumno:** Noyola Rivera Carlos Ernesto
-**Numero de control:** 22210327
+## Nombre: Noyola Rivera Carlos Ernesto
+## Numero de control: 22210327
 
 ---
 
