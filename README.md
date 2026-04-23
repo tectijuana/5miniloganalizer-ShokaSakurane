@@ -1,145 +1,142 @@
-# Práctica 1
-## Implementación de un Mini Cloud Log Analyzer en ARM64
-## Noyola Rivera Carlos Ernesto
-## Numero de contro: 22210327
+# Mini Cloud Log Analyzer — Variante D
+### Detectar tres errores HTTP consecutivos
 
-**Modalidad:** Individual  
-**Entorno de trabajo:** AWS Ubuntu ARM64 + GitHub Classroom  
-**Lenguaje:** ARM64 Assembly (GNU Assembler) + Bash + GNU Make  
-**Variante asignada:** D — Detectar tres errores consecutivos
-
----
-
-## 📦 Entrega de la practica
-
-🔽 Descarga el proyecto completo:  
-👉 [MiniCloudAnalyzer.zip](https://github.com/user-attachments/files/26989903/MiniCloudAnalyzer.zip)
-
-
-### Contenido del archivo:
-
-- `analyzer.s` → Código fuente en ARM64 Assembly
-- `Makefile` → Script de compilación
-- `logs.txt` → Archivo de pruebas
-- `README.md` → Documentación del proyecto
+**Materia:** Arquitectura de Computadoras  
+**Lenguaje:** ARM64 Assembly (GNU Assembler)  
+**Entorno:** AWS Ubuntu ARM64
+**Nombre del alumno:** Noyola Rivera Carlos Ernesto
+**Numero de control:** 22210327
 
 ---
 
-## Introducción
+## Descripción
 
-Los sistemas modernos de cómputo en la nube generan continuamente registros (logs) que permiten monitorear el estado de servicios, detectar fallas y activar alertas ante eventos críticos.
+Este programa analiza códigos de estado HTTP leídos desde `stdin` y detecta
+si en algún punto del log aparecen **tres o más errores consecutivos**
+(códigos 4xx o 5xx). Al detectarlos, imprime una alerta y continúa procesando.
 
-En esta práctica se desarrolla un módulo simplificado de análisis de logs, implementado en ARM64 Assembly, inspirado en tareas reales de monitoreo utilizadas en sistemas cloud, observabilidad y administración de infraestructura.
-
-El programa procesa códigos de estado HTTP suministrados mediante entrada estándar:
+### Uso
 
 ```bash
+make
 cat logs.txt | ./analyzer
 ```
 
 ---
 
-## 🎯 Objetivo general
+## Diseño y lógica
 
-Diseñar e implementar, en lenguaje ensamblador ARM64, una solución para procesar registros de eventos y detectar la condición de **tres errores consecutivos** definida en la variante D.
+### Flujo principal
 
----
-
-## ⚠️ Variante D — Detectar tres errores consecutivos
-
-El programa debe leer los códigos HTTP línea por línea y determinar si en algún punto se reciben tres respuestas de error (4xx o 5xx) de forma consecutiva.
-
-**Regla:**
-- Error = códigos entre 400 y 599
-- Se detectan 3 errores seguidos
-
-**Lógica aplicada:**
-contador = 0
-por cada código leído:
-si 400 <= código <= 599:
-contador++
-si no:
-contador = 0
-si contador == 3:
-    mostrar mensaje y terminar
-
----
-
-## 🧠 Objetivos específicos
-
-- Programación en ARM64 bajo Linux
-- Manejo de registros (`x19`, `x20`)
-- Direccionamiento y acceso a memoria
-- Instrucciones de comparación (`cmp`)
-- Estructuras iterativas en ensamblador
-- Saltos condicionales (`bne`, `beq`, `blt`, `bgt`)
-- Uso de syscalls Linux (`read`, `write`, `exit`)
-- Compilación con GNU Make
-- Control de versiones con GitHub Classroom
-
----
-
-## 📁 Estructura del proyecto
-MiniCloudAnalyzer/
-├── analyzer.s
-├── Makefile
-├── logs.txt
-└── README.md
-
----
-
-## ⚙️ Compilación
-
-```bash
-make
+```
+inicio
+  ↓
+leer línea de stdin (read syscall)
+  ↓ EOF?  → imprimir resumen final → exit
+  ↓
+parsear 3 dígitos ASCII → código HTTP (entero)
+  ↓
+¿código >= 400?
+  ├─ SÍ → consecutivos++
+  │         ¿consecutivos >= 3?
+  │           ├─ SÍ + primera vez → imprimir ALERTA
+  │           └─ NO → continuar
+  └─ NO → ¿código 2xx?
+            ├─ SÍ → consecutivos = 0
+            └─ NO (3xx/1xx) → ignorar
+  ↓
+volver a leer siguiente línea
 ```
 
-## ▶️ Ejecución
+### Clasificación de códigos
 
-```bash
-cat logs.txt | ./analyzer
+| Rango | Categoría  | Efecto en contador         |
+|-------|-----------|----------------------------|
+| 2xx   | Éxito     | Resetea consecutivos a 0   |
+| 3xx   | Redirección | Ignorado (no afecta)     |
+| 4xx   | Error cliente | Incrementa consecutivos |
+| 5xx   | Error servidor | Incrementa consecutivos |
+
+### Registros ARM64 utilizados
+
+| Registro | Uso                                              |
+|----------|--------------------------------------------------|
+| `x19`    | Contador de errores consecutivos                 |
+| `x20`    | Bandera: 1 si ya se imprimió la alerta           |
+| `x21`    | Bytes retornados por `read` syscall              |
+| `x22`    | Puntero al buffer de lectura                     |
+| `x23`    | Código HTTP parseado (valor entero)              |
+| `x8`     | Número de syscall (convención Linux ARM64)       |
+| `x0–x2`  | Argumentos de syscall                            |
+
+### Syscalls Linux ARM64 utilizadas
+
+| Syscall | Número | Uso                        |
+|---------|--------|----------------------------|
+| `read`  | 63     | Leer línea de stdin         |
+| `write` | 64     | Imprimir mensajes a stdout  |
+| `exit`  | 93     | Terminar el proceso         |
+
+### Parsing del código HTTP
+
+El buffer contiene caracteres ASCII. Se extraen los primeros 3 bytes y se
+convierten a entero mediante:
+
+```
+código = (buf[0] - '0') × 100
+       + (buf[1] - '0') × 10
+       + (buf[2] - '0')
 ```
 
-## ✅ Resultado esperado
-Tres errores consecutivos detectados
+Usando instrucciones `ldrb` (load register byte) y operaciones aritméticas
+ARM64 (`sub`, `mul`, `add`).
 
 ---
 
-## 📸 Evidencia
+## Código de salida
 
-Se debe incluir una captura de pantalla donde se observe:
+| Código | Significado                              |
+|--------|------------------------------------------|
+| `0`    | No se detectaron 3 errores consecutivos  |
+| `1`    | Se detectó la condición crítica          |
 
-```bash
-make
-make run
+---
+
+## Instrucciones ARM64 destacadas
+
+- `ldrb` — carga un byte desde memoria (para leer dígito ASCII)
+- `mul` — multiplicación para construir valor decimal
+- `cmp` / `bge` / `blt` / `beq` — comparaciones y saltos condicionales
+- `svc #0` — invocación de syscall Linux
+- `adr` — dirección relativa al PC para referenciar datos
+- `b` — salto incondicional (bucle principal)
+
+---
+
+## Evidencia de ejecución
+
+```
+$ make
+as --warn --fatal-warnings -o analyzer.o analyzer.s
+ld -o analyzer analyzer.o
+>>> Compilación exitosa: ./analyzer
+
+$ cat logs.txt | ./analyzer
+>> Secuencia critica detectada en el log
+ALERTA: Se detectaron 3 errores consecutivos
+
+$ echo $?
+1
 ```
 
----
+### Test sin errores consecutivos:
+```
+$ printf "200\n404\n200\n503\n200\n" | ./analyzer
+OK: No se detectaron 3 errores consecutivos
 
-## 📌 Entregables
-
-- Código ARM64 funcional (`analyzer.s`)
-- Archivo comprimido `MiniCloudAnalyzer.zip`
-- README documentado
-- Evidencia de ejecución
-- Historial de commits en GitHub Classroom
-
----
-
-## 📊 Criterios de evaluación
-
-| Criterio | Ponderación |
-|---|---|
-| Compilación correcta | 20% |
-| Correctitud de la solución | 35% |
-| Uso adecuado de ARM64 | 25% |
-| Documentación y comentarios | 10% |
-| Evidencia de pruebas | 10% |
-
----
-
-## 🚫 Restricciones
-
+$ echo $?
+0
+```
 - No usar C para la lógica
 - No usar Python para la lógica
 - No modificar la variante asignada (D)
